@@ -30,11 +30,13 @@ import javafx.util.Duration;
 
 
 public class Editor extends Application {
+
 	private static int WINDOW_WIDTH = 500;
     private static int WINDOW_HEIGHT = 500;
     private static int TEXT_POSITION_X = 5;
     private static int TEXT_POSITION_Y = 0;
     private static int XRightMargin;
+
     ScrollBar scrollBar;
     private LinkedListDeque<Text> text = new LinkedListDeque<>();
     private ArrayLine<LinkedListDeque.Node> Lines = new ArrayLine<>();
@@ -63,57 +65,67 @@ public class Editor extends Application {
 
         KeyEventHandler(final Group root, int windowWidth, int windowHeight) {
 
-            // Initialize some empty text and add it to root so that it will be displayed.
             displayText = new Text(TEXT_POSITION_X, TEXT_POSITION_Y, "");
-            // Always set the text origin to be VPos.TOP! Setting the origin to be VPos.TOP means
-            // that when the text is assigned a y-position, that position corresponds to the
-            // highest position across all letters (for example, the top of a letter like "I", as
-            // opposed to the top of a letter like "e"), which makes calculating positions much
-            // simpler!
+
             LowestWordPos = 0;
             childroot = new Group();
             stacks = new UndoRedoStacks();
             FSize = fontSize;
             font = fontName;
+
             displayText.setTextOrigin(VPos.TOP);
             displayText.setFont(Font.font(fontName, fontSize));
+
             Groot = root;
             Groot.getChildren().add(childroot);
+
             cursor = new Rectangle(1, STARTING_FONT_SIZE);
             cursor.setX(TEXT_POSITION_X);
             cursor.setY(TEXT_POSITION_Y);
+
             Text sampleLetter = new Text("l");
             sampleLetter.setFont(Font.font(fontName, fontSize));
             fontHeight = (int) Math.round(sampleLetter.getLayoutBounds().getHeight());
-            // All new Nodes need to be added to the root in order to be displayed.
+
             root.getChildren().add(displayText);
         }
 
         @Override
         public void handle(KeyEvent keyEvent) {
+
             if (keyEvent.isShortcutDown()) {
+
                 if (keyEvent.getCode() == KeyCode.P) {
-                    System.out.println((int) Math.round(cursor.getX()) + ", " + (int) Math.round(cursor.getY()));
+
                 } else if (keyEvent.getCode() == KeyCode.PLUS || keyEvent.getCode() == KeyCode.EQUALS) {
+
                     FSize += 4;
                     Text sampleLetter = new Text("l");
                     sampleLetter.setFont(Font.font(font, FSize));
                     fontHeight = (int) Math.round(sampleLetter.getLayoutBounds().getHeight());
                     Render();
                     cursor.setHeight(FSize);
-                    updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                    updateCursor(text.currentNode.item.getX() +
+                            text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+
                 } else if (keyEvent.getCode() == KeyCode.MINUS) {
+
                     if (FSize > 4) {
+
                         FSize -= 4;
                         Text sampleLetter = new Text("l");
                         sampleLetter.setFont(Font.font(font, FSize));
                         fontHeight = (int) Math.round(sampleLetter.getLayoutBounds().getHeight());
                         Render();
                         cursor.setHeight(FSize);
-                        updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                        updateCursor(text.currentNode.item.getX() +
+                                text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+
                     }
                 } else if (keyEvent.getCode() == KeyCode.S) {
+
                     try {
+
                         LinkedListDeque.Node temp = text.sentinel.next;
                         FileWriter writer = new FileWriter(fileName);
                         while (temp != text.sentinel && temp != null) {
@@ -122,6 +134,7 @@ public class Editor extends Application {
                             temp = temp.next;
                         }
                         writer.close();
+
                     } catch (IOException ioException) {
                         System.out.println("Error when copying; exception was: " + ioException);
                     }
@@ -131,25 +144,25 @@ public class Editor extends Application {
                     Redo();
                 }
             } else if (keyEvent.getEventType() == KeyEvent.KEY_TYPED) {
-                // Use the KEY_TYPED event rather than KEY_PRESSED for letter keys, because with
-                // the KEY_TYPED event, javafx handles the "Shift" key and associated
-                // capitalization.
+
                 String characterTyped = keyEvent.getCharacter();
                 Text letter = new Text(TEXT_POSITION_X, TEXT_POSITION_Y, characterTyped);
+
                 if (characterTyped.length() > 0 && characterTyped.charAt(0) != 8) {
-                    // Ignore control keys, which have non-zero length, as well as the backspace
-                    // key, which is represented as a character of value = 8 on Windows.
+
                     if (characterTyped.equals("\r")) {
+
                         stacks.AddUndo(text.currentNode);
                         Text enter = new Text(TEXT_POSITION_X, TEXT_POSITION_Y, "\r");
                         text.addCurrent(enter);
                         TEXT_POSITION_X = 5;
-//                        cursor.setY(cursor.getY() + fontHeight);
-//                        cursor.setX(TEXT_POSITION_X);
+
                         updateCursor(TEXT_POSITION_X, cursor.getY() + fontHeight);
                         Render();
                         stacks.NewRedo();
+
                     } else {
+
                         text.addCurrent(letter);
                         text.currentNode.operation = 1;
                         stacks.AddUndo(text.currentNode);
@@ -157,10 +170,10 @@ public class Editor extends Application {
                         letter.setFont(Font.font(fontName, fontSize));
                         childroot.getChildren().add(letter);
                         Render();
-                        updateCursor(text.currentNode.item.getX() + letter.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                        updateCursor(text.currentNode.item.getX() +
+                                letter.getLayoutBounds().getWidth(), text.currentNode.item.getY());
                         stacks.NewRedo();
-                        System.out.println(text.currentNode.item.getText());
-                        System.out.println("enter1");
+
                     }
                 }
             } else if (keyEvent.getCode() == KeyCode.BACK_SPACE) {
@@ -169,49 +182,29 @@ public class Editor extends Application {
                     stacks.AddUndo(text.currentNode);
                     Text last = text.removeCurrent();
                     Render();
-                    updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                    updateCursor(text.currentNode.item.getX() +
+                            text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
                     childroot.getChildren().remove(last);
                     stacks.NewRedo();
                 }
-            }/* else if (keyEvent.getCode() == KeyCode.ENTER) {
-      //          aLink.list.endX = TEXT_POSITION_X;
-                stacks.AddUndo(text.currentNode);
-                currentLine++;
-                Text enter = new Text(0, 0, "\n");
-                text.addCurrent(enter);
-//                if (currentLine > Lines.MaxLineNum) {
-//                    // update
-//                    Lines.newLine();
-//                }
+            } else if (keyEvent.getCode() == KeyCode.RIGHT) {
 
-                TEXT_POSITION_X = 5;
-                TEXT_POSITION_Y += fontHeight;
-                cursor.setY(TEXT_POSITION_Y);
-                cursor.setX(TEXT_POSITION_X);
-                CursorX = 0;
-                CursorY++;
-                Render();
-                stacks.NewRedo();
-                System.out.println("enter2");
-            }*/ else if (keyEvent.getCode() == KeyCode.RIGHT) {
-//                if (CursorX < text.size()) {
-//                }
-//                cursor.setX(text.currentNode.item.getX());
-//                cursor.setY(text.currentNode.item.getY());
                 double temp = cursor.getY();
                 text.moveRight();
+
                 if (cursor.getY() != temp) {
                     updateCursor(text.currentNode.item.getX(), text.currentNode.item.getY());
                 } else {
-                    updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                    updateCursor(text.currentNode.item.getX() +
+                            text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
                 }
-                System.out.println(text.currentNode.item.getText());
+
             } else if (keyEvent.getCode() == KeyCode.LEFT) {
-//                updateCursor(text.currentNode.item.getX(), text.currentNode.item.getY());
-//                text.moveLeft();
+
                 text.moveLeft();
-                updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
-                System.out.println(text.currentNode.item.getText());
+                updateCursor(text.currentNode.item.getX() +
+                        text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+
             } else if (keyEvent.getCode() == KeyCode.UP) {
                 if (cursor.getY() > 0) {
                     int Target = (int) Math.round(cursor.getY() / fontHeight) - 1;
@@ -225,40 +218,39 @@ public class Editor extends Application {
                         text.currentNode = text.currentNode.prev;
                         updateCursor(5, TargetHeight - fontHeight);
                     } else {
-                        System.out.println(TargetHeight);
+
                         while (CountWidth < (int) Math.round(cursor.getX())
                                 && text.currentNode.next.item.getY() == TargetHeight) {
                             CountWidth += text.currentNode.item.getLayoutBounds().getWidth();
                             text.currentNode = text.currentNode.next;
                         }
-//                        if (text.currentNode.item.getX() == 0) {
-//                            updateCursor(5, Target * fontHeight);
-//                            text.currentNode = text.currentNode.prev;
-//                        } else {
-//                            FindClosest(cursor.getX());
-//                            text.currentNode = text.currentNode.prev;
-//                            updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
-//                        }
+
                         if (text.currentNode.next.item.getX() < text.currentNode.item.getX()) {
-                            System.out.println(text.currentNode.item.getText());
-                            //  text.moveRight();
-                            if (text.currentNode.item.getX() + (text.currentNode.item.getLayoutBounds().getWidth() / 2) > cursor.getX()) {
+
+                            if (text.currentNode.item.getX() +
+                                    (text.currentNode.item.getLayoutBounds().getWidth() / 2) > cursor.getX()) {
                                 text.moveLeft();
                             }
-                            updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                            updateCursor(text.currentNode.item.getX() +
+                                    text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
                         } else {
+
                             FindClosest(cursor.getX());
                             text.currentNode = text.currentNode.prev;
-                            updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                            updateCursor(text.currentNode.item.getX() +
+                                    text.currentNode.item.getLayoutBounds().getWidth(),
+                                    text.currentNode.item.getY());
                         }
                     }
                 }
             } else if (keyEvent.getCode() == KeyCode.DOWN) {
+
                 if (cursor.getY() / fontHeight < Lines.size() - 1) {
                     int Target = (int) Math.round(cursor.getY() / fontHeight) + 1;
                     text.currentNode = Lines.get(Target);
                     double TargetHeight = text.currentNode.item.getY();
                     int CountWidth = 5;
+
                     if (cursor.getX() == 5) {
                         updateCursor(5, Target * fontHeight);
                         text.currentNode = text.currentNode.prev;
@@ -266,26 +258,27 @@ public class Editor extends Application {
                         text.currentNode = text.currentNode.prev;
                         updateCursor(5, TargetHeight - fontHeight);
                     } else {
+
                         while (CountWidth < (int) Math.round(cursor.getX())
                                 && text.currentNode.next.item.getY() == TargetHeight) {
                             CountWidth += text.currentNode.item.getLayoutBounds().getWidth();
                             text.currentNode = text.currentNode.next;
                         }
                         if (text.currentNode.next.item.getX() < text.currentNode.item.getX()) {
-                            System.out.println(text.currentNode.item.getText());
-                            //  text.moveRight();
-                            if (text.currentNode.item.getX() + (text.currentNode.item.getLayoutBounds().getWidth() / 2) > cursor.getX()) {
+
+                            if (text.currentNode.item.getX() +
+                                    (text.currentNode.item.getLayoutBounds().getWidth() / 2) > cursor.getX()) {
                                 text.moveLeft();
                             }
-                            updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                            updateCursor(text.currentNode.item.getX() +
+                                    text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
                         } else {
                             FindClosest(cursor.getX());
                             text.currentNode = text.currentNode.prev;
-                            updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                            updateCursor(text.currentNode.item.getX() +
+                                    text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
                         }
-//                        FindClosest(cursor.getX());
-//                        text.currentNode = text.currentNode.prev;
-//                        updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+
                     }
                 }
             }
@@ -302,7 +295,6 @@ public class Editor extends Application {
         if (stacks.UndoStack.peek() != null) {
             LinkedListDeque.Node Undid = stacks.RemoveUndo();
             stacks.AddRedo(Undid);
-            System.out.println(Undid);
             if (Undid != null) {
                 if (Undid.operation < 0) {
                     Undid.prev.next = Undid;
@@ -365,7 +357,6 @@ public class Editor extends Application {
         while (CurrentNode != text.sentinel) {
             Text letter = CurrentNode.item;
             WordLength += Math.round(letter.getLayoutBounds().getWidth());
-            // Switched bottom two
             letter.setFont(Font.font(font, FSize));
             letter.setTextOrigin(VPos.TOP);
             if (letter.getText().equals(" ")) {
@@ -378,7 +369,6 @@ public class Editor extends Application {
                 TEMP_TEXT_POSITION_X = 5;
                 TEMP_TEXT_POSITION_Y += fontHeight;
                 WordLength = 0;
-                // Possible Issue
                 Lines.add(CurrentNode.next);
                 MaxLineNum++;
             }
@@ -397,9 +387,7 @@ public class Editor extends Application {
                             LastWord = LastWord.next;
                         }
                     }
-//                    LastWord.item.setX(TEMP_TEXT_POSITION_X);
-//                    LastWord.item.setY(TEMP_TEXT_POSITION_Y);
-//                    TEMP_TEXT_POSITION_X += Math.round(LastWord.item.getLayoutBounds().getWidth());
+
                 } else {
                     Lines.add(CurrentNode);
                     MaxLineNum++;
@@ -414,7 +402,6 @@ public class Editor extends Application {
         }
         LowestWordPos = (int) Math.round(CurrentNode.prev.item.getY());
         updateScrollBarLength();
-        System.out.println(LowestWordPos);
     }
 
 
@@ -423,7 +410,6 @@ public class Editor extends Application {
         private Color[] boxColors = {Color.BLACK, Color.WHITE};
 
         RectangleBlinkEventHandler() {
-            // Set the color to be the first color in the list.
             changeColor();
         }
 
@@ -439,7 +425,6 @@ public class Editor extends Application {
     }
 
     private void updateWindow() {
-        System.out.println("(" + childroot.getLayoutY() + ", " + cursor.getY() + ")");
         if (WINDOW_HEIGHT < childroot.getLayoutY() + cursor.getY() + cursor.getHeight()) {
             childroot.setLayoutY(WINDOW_HEIGHT - cursor.getHeight() - cursor.getY());
         } else if (cursor.getY() + childroot.getLayoutY() < 0) {
@@ -449,7 +434,6 @@ public class Editor extends Application {
 
     public void makeRectangleColorChange() {
         final Timeline timeline = new Timeline();
-        // The rectangle should continue blinking forever.
         timeline.setCycleCount(Timeline.INDEFINITE);
         RectangleBlinkEventHandler cursorChange = new RectangleBlinkEventHandler();
         KeyFrame keyFrame = new KeyFrame(Duration.seconds(.5), cursorChange);
@@ -461,9 +445,7 @@ public class Editor extends Application {
 
         @Override
         public void handle(MouseEvent mouseEvent) {
-            // Because we registered this EventHandler using setOnMouseClicked, it will only called
-            // with mouse events of type MouseEvent.MOUSE_CLICKED.  A mouse clicked event is
-            // generated anytime the mouse is pressed and released on the same JavaFX node.
+
             double mousePressedX = mouseEvent.getX();
             int mousePressedY = (int) mouseEvent.getY();
             int TargetY = (int) Math.round((mousePressedY / fontHeight) - childroot.getLayoutY());
@@ -486,16 +468,17 @@ public class Editor extends Application {
                         text.currentNode = text.currentNode.next;
                     }
                     if (text.currentNode.next.item.getX() < text.currentNode.item.getX()) {
-                        System.out.println(text.currentNode.item.getText());
-                      //  text.moveRight();
-                        if (text.currentNode.item.getX() + (text.currentNode.item.getLayoutBounds().getWidth() / 2) > mousePressedX) {
+                        if (text.currentNode.item.getX() +
+                                (text.currentNode.item.getLayoutBounds().getWidth() / 2) > mousePressedX) {
                             text.moveLeft();
                         }
-                        updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                        updateCursor(text.currentNode.item.getX() +
+                                text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
                     } else {
                         FindClosest(mousePressedX);
                         text.currentNode = text.currentNode.prev;
-                        updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                        updateCursor(text.currentNode.item.getX() +
+                                text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
                     }
                 }
             }
@@ -513,7 +496,6 @@ public class Editor extends Application {
     public void Open(String f) {
         try {
             File inputFile = new File(f);
-            // Check to make sure that the input file exists!
             if (!inputFile.exists()) {
                 System.out.println("Unable to open because file with name " + f
                         + " does not exist");
@@ -524,13 +506,10 @@ public class Editor extends Application {
 
 
             int intRead = -1;
-            // Keep reading from the file input read() returns -1, which means the end of the file
-            // was reached.
+
             while ((intRead = bufferedReader.read()) != -1) {
-                // The integer read can be cast to a char, because we're assuming ASCII.
                 char charRead = (char) intRead;
                 Text letter = new Text(0, 0, String.valueOf(charRead));
-                System.out.print(charRead);
                 text.addLast(letter);
                 childroot.getChildren().add(letter);
             }
@@ -538,7 +517,6 @@ public class Editor extends Application {
                 Render();
             }
 
-            // Close the reader and writer.
             bufferedReader.close();
         } catch (IOException ioException) {
             System.out.println("Error when opening; exception was: " + ioException);
@@ -555,6 +533,7 @@ public class Editor extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+
     	Group root = new Group();
     	Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT, Color.WHITE);
     	EventHandler<KeyEvent> keyEventHandler = new KeyEventHandler(root, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -579,27 +558,30 @@ public class Editor extends Application {
         XRightMargin = WINDOW_WIDTH - 5 - ScrollBarWidth;
 
         scrollBar.valueProperty().addListener(new ChangeListener<Number>() {
-            public void changed(ObservableValue<? extends Number> observableValue, Number oldValue, Number newValue) {
+            public void changed(ObservableValue<? extends Number> observableValue,
+                                Number oldValue, Number newValue) {
                 childroot.setLayoutY(-newValue.doubleValue());
             }
         });
 
-        // Source: https://blog.idrsolutions.com/2012/11/adding-a-window-resize-listener-to-javafx-scene/
         scene.widthProperty().addListener(new ChangeListener<Number>() {
-            @Override public void changed(ObservableValue<? extends Number> observableValue, Number oldSceneWidth, Number newSceneWidth) {
+            @Override public void changed(ObservableValue<? extends Number> observableValue,
+                                          Number oldSceneWidth, Number newSceneWidth) {
                 WINDOW_WIDTH = newSceneWidth.intValue();
                 XRightMargin = WINDOW_WIDTH - 5 - (int) Math.round(scrollBar.getLayoutBounds().getWidth());
                 double usableScreenWidth = WINDOW_WIDTH - ScrollBarWidth;
                 scrollBar.setLayoutX(usableScreenWidth);
                 if (text.size() > 0) {
                     Render();
-                    updateCursor(text.currentNode.item.getX() + text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
+                    updateCursor(text.currentNode.item.getX() +
+                            text.currentNode.item.getLayoutBounds().getWidth(), text.currentNode.item.getY());
                 }
             }
         });
 
         scene.heightProperty().addListener(new ChangeListener<Number>() {
-            @Override public void changed(ObservableValue<? extends Number> observableValue, Number oldSceneHeight, Number newSceneHeight) {
+            @Override public void changed(ObservableValue<? extends Number> observableValue,
+                                          Number oldSceneHeight, Number newSceneHeight) {
                 WINDOW_HEIGHT = newSceneHeight.intValue();
             }
         });

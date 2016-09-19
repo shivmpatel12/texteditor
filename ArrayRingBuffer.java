@@ -2,19 +2,13 @@ package editor;
 import java.util.Iterator;
 
 public class ArrayRingBuffer<T> extends AbstractBoundedQueue<T> {
-    /* Index for the next dequeue or peek. */
-          // index for the next dequeue or peek
-    /* Index for the next enqueue. */
+
     private int last;
-    /* Array for storing the buffer data. */
     private T[] rb;
 
 
     public ArrayRingBuffer(int capacity) {
-        //       first, last, and fillCount should all be set to 0.
-        //       this.capacity should be set appropriately. Note that the local variable
-        //       here shadows the field we inherit from AbstractBoundedQueue, so
-        //       you'll need to use this.capacity to set the capacity.
+
         rb = (T[]) new Object[capacity];
         fillCount = 0;
         last = 0;
